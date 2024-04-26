@@ -91,9 +91,6 @@ void loop() {
         // Disminuir la intensidad del color azul
         disminuirIntensidadColor(PIN_LED_BLUE);
         break;
-      default:
-        // Si se presiona otro botón, no hacer nada
-        break;
     }
 
     //imprimios por el puerto seie los valores que queremos controlar
