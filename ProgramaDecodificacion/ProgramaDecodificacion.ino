@@ -1,6 +1,6 @@
 #include <IRremote.h>  //icluimos la libreria para trabajar con el control, es la version 3.3.0
 
-#define IRpin 9        //pin de de entrada de datos del receptor infrarojo
+#define IRpin 2        //pin de de entrada de datos del receptor infrarojo
 int state = 0;        //bariable utilizada para guardar el valor decodificado de ña señal
 
 /*codigo=boton        //esos son los valores de cada boton de un control de un kit de arduino, en el caso de que se utilice otro control se debe de cargar este
@@ -41,7 +41,16 @@ void loop() {
     Serial.print("Comando: ");
     Serial.println(state);                   //imprime el valor obtenido en el puero serie para seber el valor asociado a ese boton
 
-    delay(1000);
+    Serial.print("Tipo de protocolo: ");
+    Serial.println(IrReceiver.decodedIRData.protocol); //obtenemos el tipo de protocolo que utiliza el control, nos brinda un numero ya que no esta incorparado
+    //el registro de los valores dentro de estas libreria pero por ejemplo el valor para NEC es 7 mientras que para
+    //los Samsumg es 16
+
+   
+    Serial.print("Direccion: ");                                         //decodifica la seccion de la señal de entrada asosiada a la dirreccion
+    Serial.println( IrReceiver.decodedIRData.address);                   //imprime el valor obtenido en el puero serie para seber el valor asociado a ese boton
+
+  
     IrReceiver.resume();                     //limpia y deja en espera las centencias de la libreria utilizadas para la decodificacion
   }
 }
