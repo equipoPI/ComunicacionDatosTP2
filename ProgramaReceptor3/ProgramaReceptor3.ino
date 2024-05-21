@@ -2,11 +2,11 @@
 
 // Definir pines para el LED RGB y llegada del infrarojo
 #define PIN_LED_RED 8
-#define PIN_LED_GREEN 9
-#define PIN_LED_BLUE 10
+#define PIN_LED_GREEN 7
+#define PIN_LED_BLUE 6
 #define IRpin 2
 
-/*codigo=boton        //esos son los valores de cada boton de un control hecho por nosotros con un aruino,
+/*codigo=boton        //esos son los valores de cada boton de un control hecho por nosotros con un aruino,utilizamos teclado matricial 4x4
   11=1
   12=2
   13=3
@@ -26,26 +26,29 @@
 */
 
 // Definir códigos de los botones del control remoto
-#define CODIGO_BOTON_1 22   //prender y apagar
-#define CODIGO_BOTON_2 11  //aumentar nivel del rojo
-#define CODIGO_BOTON_3 14   //disminuir el nivel de rojo
-#define CODIGO_BOTON_4 12  //aumentar nivel de verde
-#define CODIGO_BOTON_5 15  //disminuir nivel de verde 
-#define CODIGO_BOTON_6 13   //aumentar nivel de azul
-#define CODIGO_BOTON_7 16    //disminuir nivel de azul
+#define CODIGO_BOTON_AON 22   //prender
+#define CODIGO_BOTON_AOFF 92  //apagar
+#define CODIGO_RED 40         //codigo que identifica el color rojo
+#define CODIGO_GREEN 50       //codigo que identifica el color verde
+#define CODIGO_BLUE 60        //codigo que identifica el color azul
+#define CODIGO_BOTON_1 11     //aumentar nivel del rojo
+#define CODIGO_BOTON_4 14     //disminuir el nivel de rojo
+#define CODIGO_BOTON_2 12     //aumentar nivel de verde
+#define CODIGO_BOTON_5 15     //disminuir nivel de verde 
+#define CODIGO_BOTON_3 13     //aumentar nivel de azul
+#define CODIGO_BOTON_6 16     //disminuir nivel de azul
 
 // variables de operacion
-int flag = false;
-int control = 0;
-float reset = 0;
 int state = 0;                     //variable donde se almacena el valor decodificado
-bool estado = false;      //variable control de prendido y apagado
+int control = 0;                   //variable donde se almacena el valor decodificado
+float reset = 0;                 //variable de control de tiempo
+bool estado = false;             //variable control de prendido y apagado
 int intensidadR = 0;             //valores iniciales de intensidad de los colores
 int intensidadG = 0;
 int intensidadB = 0;
 
-int registroR = 0;             //variable donde guardaremos los valores guardados en el emisor
-int registroG = 0;
+int registroR = 0;             //variable donde guardaremos los valores enviados desde el emisor
+int registroG = 0;             //son netamente de control
 int registroB = 0;
 
 void setup() {
@@ -65,92 +68,75 @@ void loop() {
   // Si se ha recibido una señal del control remoto
   if (IrReceiver.decode()) {
     state = IrReceiver.decodedIRData.address; //esta sentencia decodifica la señal recibida y la guarda en la variable state
-    control = IrReceiver.decodedIRData.command;
-if (state == 40) {
-    if (  100 <= control  and control < 390) {
-      registroR = control ;
-      intensidadR = control - 100;
-      analogWrite(PIN_LED_RED, intensidadR);
+    control = IrReceiver.decodedIRData.command; //esta sentencia decodifica el tamaño de la señal mandada y la guarda en control
+
+
+    if (state == CODIGO_BOTON_AON) {
+      estado = true;
     }
-  }
 
-  if (state == 50) {
-    if ( 400 <= control and control < 690) {
-      registroG = control;
-      intensidadG = control - 400;
-      analogWrite(PIN_LED_GREEN, intensidadG);
+    if ( state == CODIGO_BOTON_AOFF) {          //si llega el codigo del boton A se imprime 0 en las salidas ya que es la señal de apagado desde el emisor
+      analogWrite(PIN_LED_RED, 0);
+      analogWrite(PIN_LED_GREEN, 0);
+      analogWrite(PIN_LED_BLUE, 0);
+      estado = false;
     }
-  }
 
-  if (state == 60) {
-    if (  700 <= control and control < 990) {
-      registroB = control;
-      intensidadB = control - 700;
-      analogWrite(PIN_LED_BLUE, intensidadB);
+    if (estado == true) {
+      if (state == CODIGO_RED) {        //funcion para guardar la señal recibida desde el emisor para prender el controla en el valor guardado
+        intensidadR = control;         //es para el color rojo
+        analogWrite(PIN_LED_RED, intensidadR);
+      }
+
+      if (state == CODIGO_GREEN) {               //se repite lo mismo para el color verde y azul en la linea anterior
+        intensidadG = control;
+        analogWrite(PIN_LED_GREEN, intensidadG);
+      }
+
+      if (state == CODIGO_BLUE) {
+        intensidadB = control;
+        analogWrite(PIN_LED_BLUE, intensidadB);
+      }
     }
-  }
 
-  if (state == CODIGO_BOTON_1) {
-    cambiarEstadoLED();
-  }
-  if (state == CODIGO_BOTON_2) {
-    aumentarIntensidadColor(PIN_LED_RED);
-  }
-  if (state == CODIGO_BOTON_3) {
-    disminuirIntensidadColor(PIN_LED_RED);
-  }
-  if (state == CODIGO_BOTON_4) {
-    aumentarIntensidadColor(PIN_LED_GREEN);
-  }
-  if (state == CODIGO_BOTON_5) {
-    disminuirIntensidadColor(PIN_LED_GREEN);
-  }
-  if (state == CODIGO_BOTON_6) {
-    aumentarIntensidadColor(PIN_LED_BLUE);
-  }
-  if (state == CODIGO_BOTON_7) {
-    disminuirIntensidadColor(PIN_LED_BLUE);
-  }
+    if (state == CODIGO_BOTON_1) {                //condicionales donde dependiendo del valor recibido se llama a una o otra funcion
+      aumentarIntensidadColor(PIN_LED_RED);
+    }
+    if (state == CODIGO_BOTON_4) {
+      disminuirIntensidadColor(PIN_LED_RED);
+    }
+    if (state == CODIGO_BOTON_2) {
+      aumentarIntensidadColor(PIN_LED_GREEN);
+    }
+    if (state == CODIGO_BOTON_5) {
+      disminuirIntensidadColor(PIN_LED_GREEN);
+    }
+    if (state == CODIGO_BOTON_3) {
+      aumentarIntensidadColor(PIN_LED_BLUE);
+    }
+    if (state == CODIGO_BOTON_6) {
+      disminuirIntensidadColor(PIN_LED_BLUE);
+    }
 
-  Serial.print("Comando: ");
-  Serial.print(state);
-  Serial.print("   R:");
-  Serial.print(registroR);
-  Serial.print(intensidadR);
-  Serial.print("   G:");
-  Serial.print(registroG);
-  Serial.print(intensidadG);
-  Serial.print("   B:");
-  Serial.print(registroB);
-  Serial.print(intensidadB);
-  Serial.println();
-  flag = false;
+    Serial.print("Comando: ");
+    Serial.print(state);
+    Serial.print("   R:");
+    Serial.print(registroR);
+    Serial.print("  ");
+    Serial.print(intensidadR);
+    Serial.print("   G:");
+    Serial.print(registroG);
+    Serial.print("  ");
+    Serial.print(intensidadG);
+    Serial.print("   B:");
+    Serial.print(registroB);
+    Serial.print("  ");
+    Serial.print(intensidadB);
+    Serial.println();
+    //imprimios por el puerto seie los valores que queremos controlar*/
     // Reiniciar el receptor para recibir el próximo código
+
     IrReceiver.resume();
-  }
-
-  
-  reset=millis();
-  //imprimios por el puerto seie los valores que queremos controlar*/
-  if(millis()-reset >= 1500){
-    Serial.print("reset");
-   IrReceiver.resume();}
-}
-// Función para cambiar el estado del LED (encender/apagar)
-void cambiarEstadoLED() {
-
-  if (estado == false and flag == false) {
-
-    estado = true;
-    flag = true;
-  }
-
-  if (estado == true and flag == false) {
-    analogWrite(PIN_LED_RED, 0);
-    analogWrite(PIN_LED_GREEN, 0);
-    analogWrite(PIN_LED_BLUE, 0);
-    estado = false;
-    flag = true;
   }
 }
 
